@@ -8,11 +8,16 @@
 
 package org.eclipse.rdf4j.sail.shacl;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.common.exception.RDF4JException;
 import org.eclipse.rdf4j.common.transaction.IsolationLevels;
 import org.eclipse.rdf4j.model.IRI;
@@ -40,7 +45,7 @@ public class Utils {
 		sail.init();
 		sail.disableValidation();
 		Model shapes;
-		try (InputStream shapesData = Utils.class.getClassLoader().getResourceAsStream(resourceName)) {
+		try (InputStream shapesData = getResourceAsStream(resourceName)) {
 			shapes = Rio.parse(shapesData, "", RDFFormat.TURTLE, RDF4J.SHACL_SHAPE_GRAPH);
 		}
 		try (SailConnection conn = sail.getConnection()) {
@@ -56,7 +61,7 @@ public class Utils {
 
 	public static void loadShapeData(SailRepository repo, String resourceName) throws IOException {
 
-		try (InputStream shapesData = Utils.class.getClassLoader().getResourceAsStream(resourceName)) {
+		try (InputStream shapesData = getResourceAsStream(resourceName)) {
 
 			try (RepositoryConnection conn = repo.getConnection()) {
 				conn.begin(IsolationLevels.NONE, ShaclSail.TransactionSettings.ValidationApproach.Disabled);
@@ -117,7 +122,7 @@ public class Utils {
 
 	public static void loadInitialData(SailRepository repo, String resourceName) throws IOException {
 
-		try (InputStream initialData = Utils.class.getClassLoader().getResourceAsStream(resourceName)) {
+		try (InputStream initialData = getResourceAsStream(resourceName)) {
 			if (initialData == null) {
 				return;
 			}
@@ -129,6 +134,27 @@ public class Utils {
 			}
 		}
 
+	}
+
+	static final Map<String, byte[]> fileCache = new ConcurrentHashMap<>();
+	static final byte[] NULL = {};
+
+	public static InputStream getResourceAsStream(String resourceName) throws IOException {
+
+		byte[] cached = fileCache.get(resourceName);
+		if (cached == null) {
+			try (InputStream inputStream = Utils.class.getClassLoader().getResourceAsStream(resourceName)) {
+				if (inputStream == null) {
+					cached = NULL;
+				} else {
+					cached = IOUtils.toByteArray(inputStream);
+				}
+				fileCache.put(resourceName, cached);
+			}
+		}
+
+		assert cached != null;
+		return new ByteArrayInputStream(cached);
 	}
 
 	static class Ex {
@@ -146,7 +172,7 @@ public class Utils {
 		}
 
 		public static IRI createIri() {
-			return SimpleValueFactory.getInstance().createIRI(ns + UUID.randomUUID().toString());
+			return SimpleValueFactory.getInstance().createIRI(ns + UUID.randomUUID());
 		}
 	}
 }

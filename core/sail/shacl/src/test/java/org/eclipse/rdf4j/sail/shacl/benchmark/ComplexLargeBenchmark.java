@@ -19,12 +19,14 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.assertj.core.util.Files;
 import org.eclipse.rdf4j.common.transaction.IsolationLevels;
+import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.repository.sail.SailRepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.eclipse.rdf4j.sail.nativerdf.NativeStore;
 import org.eclipse.rdf4j.sail.shacl.GlobalValidationExecutionLogging;
@@ -51,7 +53,7 @@ import ch.qos.logback.classic.Logger;
  * @author Håvard Ottestad
  */
 @State(Scope.Benchmark)
-@Warmup(iterations = 10)
+@Warmup(iterations = 0)
 @BenchmarkMode({ Mode.AverageTime })
 @Fork(value = 1, jvmArgs = { "-Xms8G", "-Xmx8G" })
 //@Fork(value = 1, jvmArgs = {"-Xms8G", "-Xmx8G", "-XX:StartFlightRecording=delay=15s,duration=120s,filename=recording.jfr,settings=profile", "-XX:FlightRecorderOptions=samplethreads=true,stackdepth=1024", "-XX:+UnlockDiagnosticVMOptions", "-XX:+DebugNonSafepoints"})
@@ -62,10 +64,11 @@ public class ComplexLargeBenchmark {
 		GlobalValidationExecutionLogging.loggingEnabled = false;
 	}
 
-	private static String transaction1;
-	private static String transaction2;
-	private static String transaction3;
-	private static String transaction4;
+	private static final String transaction1;
+	private static final String transaction2;
+	private static final String transaction3;
+	private static final String transaction4;
+	private static final Model data;
 
 	static {
 		try {
@@ -86,6 +89,8 @@ public class ComplexLargeBenchmark {
 							.getResourceAsStream("complexBenchmark/transaction4.qr"),
 					StandardCharsets.UTF_8);
 
+			data = getData();
+
 		} catch (IOException e) {
 			throw new RuntimeException();
 		}
@@ -97,24 +102,22 @@ public class ComplexLargeBenchmark {
 	public void setUp() throws InterruptedException {
 
 		((Logger) LoggerFactory.getLogger(ShaclSailConnection.class.getName()))
-				.setLevel(ch.qos.logback.classic.Level.ERROR);
+				.setLevel(ch.qos.logback.classic.Level.WARN);
 		((Logger) LoggerFactory.getLogger(ShaclSail.class.getName())).setLevel(ch.qos.logback.classic.Level.ERROR);
 		System.setProperty("org.eclipse.rdf4j.sail.shacl.experimentalSparqlValidation", "true");
 
 		try {
 			repository = new SailRepository(Utils.getInitializedShaclSail("complexBenchmark/shacl.ttl"));
 
-			((ShaclSail) repository.getSail()).disableValidation();
-
-			try (SailRepositoryConnection connection = repository.getConnection()) {
-				connection.begin(IsolationLevels.NONE);
-				try (InputStream resourceAsStream = getData()) {
-					connection.add(resourceAsStream, "", RDFFormat.TURTLE);
-				}
-				connection.commit();
-			}
-
-			((ShaclSail) repository.getSail()).enableValidation();
+//			((ShaclSail) repository.getSail()).disableValidation();
+//
+//			try (SailRepositoryConnection connection = repository.getConnection()) {
+//				connection.begin(IsolationLevels.NONE);
+//				connection.add(data);
+//				connection.commit();
+//			}
+//
+//			((ShaclSail) repository.getSail()).enableValidation();
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -238,9 +241,7 @@ public class ComplexLargeBenchmark {
 
 			try (SailRepositoryConnection connection = repository.getConnection()) {
 				connection.begin(IsolationLevels.NONE);
-				try (InputStream resourceAsStream = getData()) {
-					connection.add(resourceAsStream, "", RDFFormat.TURTLE);
-				}
+				connection.add(data);
 				connection.commit();
 			}
 
@@ -260,14 +261,12 @@ public class ComplexLargeBenchmark {
 
 			((ShaclSail) repository.getSail()).setParallelValidation(true);
 			((ShaclSail) repository.getSail()).setCacheSelectNodes(true);
-//			((ShaclSail) repository.getSail()).setPerformanceLogging(true);
+			((ShaclSail) repository.getSail()).setPerformanceLogging(true);
 			((ShaclSail) repository.getSail()).setTransactionalValidationLimit(1000000);
 
 			try (SailRepositoryConnection connection = repository.getConnection()) {
 				connection.begin(IsolationLevels.NONE);
-				try (InputStream resourceAsStream = getData()) {
-					connection.add(resourceAsStream, "", RDFFormat.TURTLE);
-				}
+				connection.add(data);
 				connection.commit();
 			}
 
@@ -292,9 +291,7 @@ public class ComplexLargeBenchmark {
 
 			try (SailRepositoryConnection connection = repository.getConnection()) {
 				connection.begin(IsolationLevels.NONE);
-				try (InputStream resourceAsStream = getData()) {
-					connection.add(resourceAsStream, "", RDFFormat.TURTLE);
-				}
+				connection.add(data);
 				connection.commit();
 			}
 
@@ -329,9 +326,7 @@ public class ComplexLargeBenchmark {
 
 			try (SailRepositoryConnection connection = repository.getConnection()) {
 				connection.begin(IsolationLevels.NONE);
-				try (InputStream resourceAsStream = getData()) {
-					connection.add(resourceAsStream, "", RDFFormat.TURTLE);
-				}
+				connection.add(data);
 				connection.commit();
 			}
 
@@ -349,26 +344,21 @@ public class ComplexLargeBenchmark {
 		try {
 			SailRepository repository = new SailRepository(Utils.getInitializedShaclSail("complexBenchmark/shacl.ttl"));
 
-			((ShaclSail) repository.getSail()).disableValidation();
 			((ShaclSail) repository.getSail()).setTransactionalValidationLimit(1000000);
+			((ShaclSail) repository.getSail()).setParallelValidation(true);
+			((ShaclSail) repository.getSail()).setCacheSelectNodes(true);
+			((ShaclSail) repository.getSail()).setPerformanceLogging(false);
 
 			try (SailRepositoryConnection connection = repository.getConnection()) {
-				connection.begin(IsolationLevels.NONE);
+				connection.begin(IsolationLevels.NONE, ShaclSail.TransactionSettings.ValidationApproach.Disabled);
 				SimpleValueFactory vf = SimpleValueFactory.getInstance();
 				connection.add(vf.createBNode(), vf.createIRI("http://fjljfiwoejfoiwefiew/a"), vf.createBNode());
 				connection.commit();
 			}
-			((ShaclSail) repository.getSail()).enableValidation();
-
-			((ShaclSail) repository.getSail()).setParallelValidation(true);
-			((ShaclSail) repository.getSail()).setCacheSelectNodes(true);
-//			((ShaclSail) repository.getSail()).setPerformanceLogging(true);
 
 			try (SailRepositoryConnection connection = repository.getConnection()) {
 				connection.begin(IsolationLevels.NONE);
-				try (InputStream resourceAsStream = getData()) {
-					connection.add(resourceAsStream, "", RDFFormat.TURTLE);
-				}
+				connection.add(data);
 				connection.commit();
 			}
 
@@ -394,9 +384,7 @@ public class ComplexLargeBenchmark {
 
 			try (SailRepositoryConnection connection = repository.getConnection()) {
 				connection.begin(IsolationLevels.NONE);
-				try (InputStream resourceAsStream = getData()) {
-					connection.add(resourceAsStream, "", RDFFormat.TURTLE);
-				}
+				connection.add(data);
 				connection.commit();
 			}
 
@@ -430,9 +418,7 @@ public class ComplexLargeBenchmark {
 
 			try (SailRepositoryConnection connection = repository.getConnection()) {
 				connection.begin(IsolationLevels.NONE);
-				try (InputStream resourceAsStream = getData()) {
-					connection.add(resourceAsStream, "", RDFFormat.TURTLE);
-				}
+				connection.add(data);
 				connection.commit();
 			}
 
@@ -464,9 +450,7 @@ public class ComplexLargeBenchmark {
 
 			try (SailRepositoryConnection connection = repository.getConnection()) {
 				connection.begin(IsolationLevels.NONE, ShaclSail.TransactionSettings.ValidationApproach.Bulk);
-				try (InputStream resourceAsStream = getData()) {
-					connection.add(resourceAsStream, "", RDFFormat.TURTLE);
-				}
+				connection.add(data);
 				connection.commit();
 			}
 
@@ -493,9 +477,7 @@ public class ComplexLargeBenchmark {
 						ShaclSail.TransactionSettings.ValidationApproach.Bulk,
 						ShaclSail.TransactionSettings.PerformanceHint.ParallelValidation,
 						ShaclSail.TransactionSettings.PerformanceHint.CacheEnabled);
-				try (InputStream resourceAsStream = getData()) {
-					connection.add(resourceAsStream, "", RDFFormat.TURTLE);
-				}
+				connection.add(data);
 				connection.commit();
 			}
 
@@ -524,9 +506,7 @@ public class ComplexLargeBenchmark {
 			try (SailRepositoryConnection connection = repository.getConnection()) {
 				connection.begin(IsolationLevels.NONE, ShaclSail.TransactionSettings.PerformanceHint.ParallelValidation,
 						ShaclSail.TransactionSettings.PerformanceHint.CacheEnabled);
-				try (InputStream resourceAsStream = getData()) {
-					connection.add(resourceAsStream, "", RDFFormat.TURTLE);
-				}
+				connection.add(data);
 				connection.commit();
 			}
 
@@ -556,9 +536,7 @@ public class ComplexLargeBenchmark {
 
 			try (SailRepositoryConnection connection = repository.getConnection()) {
 				connection.begin(IsolationLevels.NONE);
-				try (InputStream resourceAsStream = getData()) {
-					connection.add(resourceAsStream, "", RDFFormat.TURTLE);
-				}
+				connection.add(data);
 				connection.commit();
 			}
 
@@ -659,9 +637,7 @@ public class ComplexLargeBenchmark {
 
 			try (SailRepositoryConnection connection = repository.getConnection()) {
 				connection.begin(IsolationLevels.NONE);
-				try (InputStream resourceAsStream = getData()) {
-					connection.add(resourceAsStream, "", RDFFormat.TURTLE);
-				}
+				connection.add(data);
 				connection.commit();
 			}
 
@@ -684,9 +660,7 @@ public class ComplexLargeBenchmark {
 
 			try (SailRepositoryConnection connection = repository.getConnection()) {
 				connection.begin(IsolationLevels.NONE, ShaclSail.TransactionSettings.ValidationApproach.Disabled);
-				try (InputStream resourceAsStream = getData()) {
-					connection.add(resourceAsStream, "", RDFFormat.TURTLE);
-				}
+				connection.add(data);
 				connection.commit();
 			}
 
@@ -700,29 +674,26 @@ public class ComplexLargeBenchmark {
 
 	@Benchmark
 	public void noShacl() {
+		SailRepository repository = new SailRepository(new MemoryStore());
 
-		try {
-			SailRepository repository = new SailRepository(new MemoryStore());
+		try (SailRepositoryConnection connection = repository.getConnection()) {
+			connection.begin(IsolationLevels.NONE);
+			connection.add(data);
+			connection.commit();
+		}
 
-			try (SailRepositoryConnection connection = repository.getConnection()) {
-				connection.begin(IsolationLevels.NONE);
-				try (InputStream resourceAsStream = getData()) {
-					connection.add(resourceAsStream, "", RDFFormat.TURTLE);
-				}
-				connection.commit();
-			}
+		repository.shutDown();
+	}
 
-			repository.shutDown();
-
+	private static Model getData() {
+		ClassLoader classLoader = ComplexLargeBenchmark.class.getClassLoader();
+		try (BufferedInputStream bufferedInputStream = new BufferedInputStream(
+				classLoader.getResourceAsStream("complexBenchmark/datagovbe-valid.ttl"))) {
+			return Rio.parse(bufferedInputStream, RDFFormat.TURTLE);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 
-	}
-
-	private static BufferedInputStream getData() {
-		ClassLoader classLoader = ComplexLargeBenchmark.class.getClassLoader();
-		return new BufferedInputStream(classLoader.getResourceAsStream("complexBenchmark/datagovbe-valid.ttl"));
 	}
 
 //	public static void main(String[] args) throws InterruptedException {

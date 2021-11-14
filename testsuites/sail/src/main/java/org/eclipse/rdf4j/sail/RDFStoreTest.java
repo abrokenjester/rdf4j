@@ -63,8 +63,8 @@ public abstract class RDFStoreTest {
 	/**
 	 * Timeout all individual tests after 1 minute.
 	 */
-	@Rule
-	public Timeout to = new Timeout(60, TimeUnit.SECONDS);
+//	@Rule
+//	public Timeout to = new Timeout(60, TimeUnit.SECONDS);
 
 	/*-----------*
 	 * Constants *
