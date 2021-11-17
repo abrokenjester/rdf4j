@@ -17,6 +17,4 @@ import org.eclipse.rdf4j.common.annotation.InternalUseOnly;
 @InternalUseOnly
 public class GlobalValidationExecutionLogging {
 
-	public static boolean loggingEnabled;
-
 }

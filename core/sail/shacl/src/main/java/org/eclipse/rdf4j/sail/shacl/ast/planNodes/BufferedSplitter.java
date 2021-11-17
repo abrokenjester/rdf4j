@@ -115,7 +115,7 @@ public class BufferedSplitter implements PlanNodeProvider {
 				public ValidationTuple next() throws SailException {
 					init();
 					ValidationTuple tuple = iterator.next();
-					if (GlobalValidationExecutionLogging.loggingEnabled) {
+					if (validationExecutionLogger.isEnabled()) {
 						validationExecutionLogger.log(depth(),
 								bufferedSplitter.parent.getClass().getSimpleName() + ":BufferedSplitter.next()", tuple,
 								bufferedSplitter.parent,

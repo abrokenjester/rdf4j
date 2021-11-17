@@ -151,7 +151,7 @@ public class Unique implements PlanNode {
 					if (next != null) {
 						previous = next;
 					} else {
-						if (GlobalValidationExecutionLogging.loggingEnabled) {
+						if (validationExecutionLogger.isEnabled()) {
 							validationExecutionLogger.log(depth(),
 									Unique.this.getClass().getSimpleName() + ":IgnoredNotUnique ", temp, Unique.this,
 									getId(), stackTrace != null ? stackTrace[2].toString() : null);

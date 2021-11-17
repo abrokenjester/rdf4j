@@ -112,7 +112,7 @@ public abstract class AbstractBulkJoinPlanNode implements PlanNode {
 								previousStateConnection.hasStatement(null, null, tuple.getActiveTarget(), true);
 					}
 
-					if (!hasStatement && GlobalValidationExecutionLogging.loggingEnabled) {
+					if (!hasStatement && validationExecutionLogger.isEnabled()) {
 						validationExecutionLogger.log(depth(),
 								this.getClass().getSimpleName() + ":IgnoredDueToPreviousStateConnection", tuple, this,
 								getId(), null);

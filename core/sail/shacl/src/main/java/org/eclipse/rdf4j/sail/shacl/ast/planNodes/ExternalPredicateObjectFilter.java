@@ -79,7 +79,7 @@ public class ExternalPredicateObjectFilter implements PlanNode {
 						if (matches) {
 							next = temp;
 						} else {
-							if (GlobalValidationExecutionLogging.loggingEnabled) {
+							if (validationExecutionLogger.isEnabled()) {
 								validationExecutionLogger.log(depth(),
 										ExternalPredicateObjectFilter.this.getClass().getSimpleName()
 												+ ":IgnoredAsNotMatching",
@@ -91,7 +91,7 @@ public class ExternalPredicateObjectFilter implements PlanNode {
 						if (!matches) {
 							next = temp;
 						} else {
-							if (GlobalValidationExecutionLogging.loggingEnabled) {
+							if (validationExecutionLogger.isEnabled()) {
 								validationExecutionLogger.log(depth(),
 										ExternalPredicateObjectFilter.this.getClass().getSimpleName()
 												+ ":IgnoredAsMatching",

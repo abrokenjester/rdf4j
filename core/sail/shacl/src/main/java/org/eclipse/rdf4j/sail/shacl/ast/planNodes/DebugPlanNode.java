@@ -46,7 +46,7 @@ public class DebugPlanNode implements PlanNode {
 	@Override
 	public CloseableIteration<? extends ValidationTuple, SailException> iterator() {
 
-		if (validationExecutionLogger == null && GlobalValidationExecutionLogging.loggingEnabled) {
+		if (validationExecutionLogger == null && validationExecutionLogger.isEnabled()) {
 			throw new IllegalStateException("Did not receive validationExecutionLogger before .iterator() was called!");
 		}
 
@@ -66,7 +66,7 @@ public class DebugPlanNode implements PlanNode {
 					debugPoint.accept(next);
 				}
 
-				if (message != null && GlobalValidationExecutionLogging.loggingEnabled) {
+				if (message != null && validationExecutionLogger.isEnabled()) {
 					validationExecutionLogger.log(depth(), message, next, DebugPlanNode.this, getId(), null);
 				}
 				return next;

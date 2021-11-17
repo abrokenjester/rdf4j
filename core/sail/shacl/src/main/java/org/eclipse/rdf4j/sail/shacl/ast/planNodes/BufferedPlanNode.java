@@ -71,7 +71,7 @@ public class BufferedPlanNode<T extends MultiStreamPlanNode & PlanNode> implemen
 			public ValidationTuple next() throws SailException {
 				calculateNext();
 				ValidationTuple tuple = buffer.remove();
-				if (GlobalValidationExecutionLogging.loggingEnabled) {
+				if (validationExecutionLogger.isEnabled()) {
 					validationExecutionLogger.log(depth(),
 							parent.getClass().getSimpleName() + ":Buffered:" + name + ".next()", tuple, parent,
 							getId(), null);
