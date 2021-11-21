@@ -3,7 +3,6 @@ package org.eclipse.rdf4j.sail.shacl.ast.constraintcomponents;
 import static org.eclipse.rdf4j.model.util.Values.literal;
 
 import java.math.BigInteger;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;

@@ -32,7 +32,6 @@ import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.impl.TreeModel;
 import org.eclipse.rdf4j.model.util.ModelBuilder;
 import org.eclipse.rdf4j.sail.config.SailConfigException;
-import org.eclipse.rdf4j.sail.shacl.ShaclSailValidationException;
 import org.junit.jupiter.api.Test;
 
 public class ShaclSailConfigTest {
